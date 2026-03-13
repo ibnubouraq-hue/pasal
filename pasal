@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Hukum & Sanksi - Sistem Kepolisian</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
+
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-red: #ff0055;
+            --neon-yellow: #ffee00;
+            --dark-bg: #0a0a0f;
+            --panel-bg: #151520;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--dark-bg);
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        .font-tech {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* Scanline effect */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                to bottom,
+                rgba(255,255,255,0),
+                rgba(255,255,255,0) 50%,
+                rgba(0,0,0,0.1) 50%,
+                rgba(0,0,0,0.1)
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.3;
+        }
+
+        /* Glow effects */
+        .glow-text {
+            text-shadow: 0 0 10px currentColor;
+        }
+
+        .glow-box {
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+        }
+
+        .glow-box:hover {
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.4);
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--dark-bg);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--neon-blue);
+        }
+
+        /* Animation */
+        @keyframes pulse-border {
+            0%, 100% { border-color: rgba(0, 243, 255, 0.3); }
+            50% { border-color: rgba(0, 243, 255, 0.8); }
+        }
+
+        .animate-border {
+            animation: pulse-border 2s infinite;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .slide-in {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+
+        .category-ringan { border-left: 4px solid #10b981; }
+        .category-sedang { border-left: 4px solid #f59e0b; }
+        .category-berat { border-left: 4px solid #ef4444; }
+
+        .glass-panel {
+            background: rgba(21, 21, 32, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .violation-item {
+            transition: all 0.3s ease;
+        }
+
+        .violation-item:hover {
+            transform: translateX(5px);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .violation-item.selected {
+            background: rgba(0, 243, 255, 0.1);
+            border-color: var(--neon-blue);
+        }
+
+        .btn-cyber {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+
+        .btn-cyber::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-cyber:hover::before {
+            left: 100%;
+        }
+
+        .total-display {
+            background: linear-gradient(135deg, rgba(0, 243, 255, 0.1), rgba(0, 0, 0, 0.5));
+            border: 2px solid var(--neon-blue);
+        }
+
+        .grid-bg {
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+    </style>
+</head>
+<body class="min-h-screen grid-bg">
+
+    <div class="scanlines"></div>
+
+    <!-- Header -->
+    <header class="relative z-10 border-b border-cyan-900/50 bg-black/50 backdrop-blur-md sticky top-0">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center border border-cyan-500/50">
+                    <i class="fas fa-shield-alt text-2xl text-cyan-400"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-tech font-bold text-white glow-text tracking-wider">
+                        POLICE<span class="text-cyan-400">CALC</span>
+                    </h1>
+                    <p class="text-xs text-cyan-600 uppercase tracking-widest">Sistem Kalkulasi Hukum & Sanksi</p>
+                </div>
+            </div>
+            
+            <div class="hidden md:flex items-center gap-6 text-sm">
+                <div class="flex items-center gap-2">
+                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                    <span class="text-gray-400">Sistem Aktif</span>
+                </div>
+                <div class="text-cyan-400 font-mono" id="clock">00:00:00</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8 relative z-10">
+        
+        <!-- Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+            <div class="glass-panel rounded-lg p-4 border border-cyan-900/30">
+                <div class="text-gray-400 text-xs uppercase mb-1">Total Pelanggaran</div>
+                <div class="text-2xl font-tech text-white" id="total-count">0</div>
+            </div>
+            <div class="glass-panel rounded-lg p-4 border border-yellow-900/30">
+                <div class="text-gray-400 text-xs uppercase mb-1">Total Denda</div>
+                <div class="text-2xl font-tech text-yellow-400">$<span id="total-fine">0</span></div>
+            </div>
+            <div class="glass-panel rounded-lg p-4 border border-red-900/30">
+                <div class="text-gray-400 text-xs uppercase mb-1">Total Sanksi</div>
+                <div class="text-2xl font-tech text-red-400"><span id="total-sanksi">0</span> <span class="text-sm">Bulan</span></div>
+            </div>
+            <div class="glass-panel rounded-lg p-4 border border-green-900/30">
+                <div class="text-gray-400 text-xs uppercase mb-1">Status</div>
+                <div class="text-lg font-tech text-green-400" id="status-text">BELUM ADA</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left Panel: Violation List -->
+            <div class="lg:col-span-2 space-y-6">
+                
+                <!-- Search & Filter -->
+                <div class="glass-panel rounded-xl p-4 border border-cyan-900/30">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="relative flex-1">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                            <input type="text" id="search-input" placeholder="Cari pelanggaran..." 
+                                class="w-full bg-black/50 border border-cyan-900/50 rounded-lg pl-10 pr-4 py-3 text-white placeholder-gray-600 focus:outline-none focus:border-cyan-500 transition-colors">
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="filterCategory('all')" class="filter-btn active px-4 py-2 rounded-lg border border-cyan-500 bg-cyan-500/20 text-cyan-400 text-sm font-semibold transition-all hover:bg-cyan-500/30" data-category="all">
+                                Semua
+                            </button>
+                            <button onclick="filterCategory('ringan')" class="filter-btn px-4 py-2 rounded-lg border border-green-900/50 bg-green-900/10 text-green-400 text-sm font-semibold transition-all hover:bg-green-900/20" data-category="ringan">
+                                Ringan
+                            </button>
+                            <button onclick="filterCategory('sedang')" class="filter-btn px-4 py-2 rounded-lg border border-yellow-900/50 bg-yellow-900/10 text-yellow-400 text-sm font-semibold transition-all hover:bg-yellow-900/20" data-category="sedang">
+                                Sedang
+                            </button>
+                            <button onclick="filterCategory('berat')" class="filter-btn px-4 py-2 rounded-lg border border-red-900/50 bg-red-900/10 text-red-400 text-sm font-semibold transition-all hover:bg-red-900/20" data-category="berat">
+                                Berat
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Violations List -->
+                <div class="glass-panel rounded-xl border border-cyan-900/30 overflow-hidden max-h-[600px] overflow-y-auto" id="violations-container">
+                    <!-- Content injected by JS -->
+                </div>
+            </div>
+
+            <!-- Right Panel: Calculator & Summary -->
+            <div class="space-y-6">
+                
+                <!-- Selected Items -->
+                <div class="glass-panel rounded-xl p-6 border border-cyan-900/30 glow-box">
+                    <h3 class="text-lg font-tech text-cyan-400 mb-4 flex items-center gap-2">
+                        <i class="fas fa-clipboard-list"></i>
+                        DAFTAR TILANG
+                    </h3>
+                    
+                    <div id="selected-list" class="space-y-2 max-h-[300px] overflow-y-auto mb-4 min-h-[100px]">
+                        <div class="text-gray-600 text-center py-8 italic text-sm">
+                            Belum ada pelanggaran dipilih
+                        </div>
+                    </div>
+
+                    <div class="border-t border-cyan-900/30 pt-4 space-y-3">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-400">Jumlah Item:</span>
+                            <span class="text-white font-mono" id="count-summary">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-400">Total Denda:</span>
+                            <span class="text-yellow-400 font-tech text-xl">$<span id="fine-summary">0</span></span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-gray-400">Total Sanksi:</span>
+                            <span class="text-red-400 font-tech text-xl"><span id="sanksi-summary">0</span> Bulan</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 grid grid-cols-2 gap-3">
+                        <button onclick="clearAll()" class="btn-cyber py-3 rounded-lg border border-red-500/50 text-red-400 hover:bg-red-500/10 transition-all text-sm font-semibold">
+                            <i class="fas fa-trash-alt mr-2"></i>Hapus
+                        </button>
+                        <button onclick="generateReport()" class="btn-cyber py-3 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white transition-all text-sm font-semibold shadow-lg shadow-cyan-500/20">
+                            <i class="fas fa-file-alt mr-2"></i>Cetak
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Quick Info -->
+                <div class="glass-panel rounded-xl p-6 border border-cyan-900/30">
+                    <h4 class="text-sm font-tech text-gray-400 mb-3 uppercase tracking-wider">Informasi</h4>
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-start gap-3">
+                            <i class="fas fa-info-circle text-cyan-400 mt-1"></i>
+                            <p class="text-gray-400">Klik pelanggaran untuk menambahkan ke daftar tilang.</p>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <i class="fas fa-exclamation-triangle text-yellow-400 mt-1"></i>
+                            <p class="text-gray-400">Pelanggaran berat dapat mengakibatkan hukuman mati/seumur hidup.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Legend -->
+                <div class="glass-panel rounded-xl p-4 border border-cyan-900/30">
+                    <div class="grid grid-cols-3 gap-2 text-xs text-center">
+                        <div class="p-2 rounded bg-green-900/20 border border-green-500/30 text-green-400">
+                            <div class="font-bold mb-1">RINGAN</div>
+                            <div class="text-[10px] opacity-70">Denda Kecil</div>
+                        </div>
+                        <div class="p-2 rounded bg-yellow-900/20 border border-yellow-500/30 text-yellow-400">
+                            <div class="font-bold mb-1">SEDANG</div>
+                            <div class="text-[10px] opacity-70">Sanksi Menengah</div>
+                        </div>
+                        <div class="p-2 rounded bg-red-900/20 border border-red-500/30 text-red-400">
+                            <div class="font-bold mb-1">BERAT</div>
+                            <div class="text-[10px] opacity-70">Hukuman Berat</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Report Modal -->
+    <div id="report-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="glass-panel rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto border border-cyan-500/30 glow-box transform scale-95 opacity-0 transition-all duration-300" id="modal-content">
+            <div class="p-6 border-b border-cyan-900/30 flex justify-between items-center">
+                <h2 class="text-2xl font-tech text-cyan-400">LAPORAN PENILANGAN</h2>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-white transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 space-y-6" id="report-content">
+                <!-- Report content injected here -->
+            </div>
+            
+            <div class="p-6 border-t border-cyan-900/30 flex justify-end gap-3">
+                <button onclick="closeModal()" class="px-6 py-2 rounded-lg border border-gray-600 text-gray-400 hover:border-white hover:text-white transition-all">
+                    Tutup
+                </button>
+                <button onclick="window.print()" class="px-6 py-2 rounded-lg bg-cyan-600 text-white hover:bg-cyan-500 transition-all">
+                    <i class="fas fa-print mr-2"></i>Cetak Laporan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data from images
+        const violations = [
+            // Pelanggaran Ringan (1.x)
+            { id: '1.1', type: 'ringan', desc: 'Membawa Minuman Beralkohol', fine: 3000, sanksi: 'HUKUMAN SOSIAL', special: true },
+            { id: '1.2', type: 'ringan', desc: 'Mengganggu ketertiban Umum / Provokator', fine: 3500, sanksi: 5 },
+            { id: '1.3', type: 'ringan', desc: 'Tidak Membawa Kartu Identitas (KTP)', fine: 5000, sanksi: 7 },
+            { id: '1.4', type: 'ringan', desc: 'Penganiayaan / Melukai Warga', fine: 10000, sanksi: 15 },
+            { id: '1.5', type: 'ringan', desc: 'Penghinaan Terhadap Warga', fine: 4000, sanksi: 8 },
+            { id: '1.6', type: 'ringan', desc: 'Telanjang / Memakai Topeng Di Area Publik', fine: 3000, sanksi: 7 },
+            { id: '1.7', type: 'ringan', desc: 'Penipuan / Pemberi Informasi Palsu', fine: 15000, sanksi: 13 },
+            { id: '1.8', type: 'ringan', desc: 'Pencemaran Nama Baik / Perbuatan Tidak Menyenangkan', fine: 8000, sanksi: 10 },
+            { id: '1.9', type: 'ringan', desc: 'Mencuri / Merusak Kendaraan', fine: 8500, sanksi: 10 },
+            { id: '1.10', type: 'ringan', desc: 'Perjudian / Tauran Yang Mengganggu Aktivitas', fine: 10000, sanksi: 10 },
+            { id: '1.11', type: 'ringan', desc: 'Mabuk Di Area Publik', fine: 7000, sanksi: 8 },
+            { id: '1.12', type: 'ringan', desc: 'Pembobolan atau Mencuri (Kendaraan / Rumah)', fine: 10000, sanksi: 12 },
+            { id: '1.13', type: 'ringan', desc: 'Melakukan Kekerasan Berupa (Meludah, Menampar, dan Perbuatan Melawan Hukum)', fine: 8000, sanksi: 10 },
+            { id: '1.14', type: 'ringan', desc: 'Mengambil Barang Orang Tersebut Secara Paksa Menggunakan Kekerasan', fine: 10000, sanksi: 13 },
+            { id: '1.15', type: 'ringan', desc: 'Mengambil Barang Milik Orang Lain Dengan Nilai Lebih Dari $10.000', fine: 15000, sanksi: 15 },
+            { id: '1.16', type: 'ringan', desc: 'Tindakan Mengeksploitasi Privasi Orang Lain', fine: 10000, sanksi: 10 },
+            { id: '1.17', type: 'ringan', desc: 'Tindakan Menjual Manusia Untuk Keperluan Pribadi', fine: 14000, sanksi: 15 },
+            { id: '1.18', type: 'ringan', desc: 'Penyalahgunaan Layanan / 911', fine: 7000, sanksi: 7 },
+            { id: '1.19', type: 'ringan', desc: 'Mencoba Menyuap Petugas Untuk Keperluan Pribadi', fine: 14000, sanksi: 15 },
+            { id: '1.20', type: 'ringan', desc: 'Merusak, Mengotori, atau Menghancurkan Properti Orang lain / Pemerintah', fine: 13000, sanksi: 15 },
+            { id: '1.21', type: 'ringan', desc: 'Menyisipkan Barang Ilegal', fine: 10000, sanksi: 10 },
+
+            // Pelanggaran Sedang (2.x)
+            { id: '2.1', type: 'sedang', desc: 'Menghina Instansi Secara Lisan / Tulisan', fine: 20000, sanksi: 20 },
+            { id: '2.2', type: 'sedang', desc: 'Berada Di Zona Merah / Zona Terlarang', fine: 8000, sanksi: 10 },
+            { id: '2.3', type: 'sedang', desc: 'Penyalah Gunaan Atribut Kepolisian', fine: 9000, sanksi: 7 },
+            { id: '2.4', type: 'sedang', desc: 'Pemakai / Pecandu Barang Ilegal', fine: 9000, sanksi: 10 },
+            { id: '2.5', type: 'sedang', desc: 'Pejabat Publik Menyalahgunakan Kepercayaan Publik', fine: 13000, sanksi: 15 },
+            { id: '2.6', type: 'sedang', desc: 'Menghancurkan / Menghilangkan Barang Bukti', fine: 15000, sanksi: 17 },
+            { id: '2.7', type: 'sedang', desc: 'Menyerang Petugas Dengan Sengaja Tanpa Senjata', fine: 15000, sanksi: 15 },
+            { id: '2.8', type: 'sedang', desc: 'Menyamar Sebagai Staf Instansi Untuk Keuntungan Pribadi', fine: 25000, sanksi: 13 },
+            { id: '2.9', type: 'sedang', desc: 'Penelpon Palsu / Penelpon Prank', fine: 10000, sanksi: 8 },
+            { id: '2.10', type: 'sedang', desc: 'Menolak dan Melawan Dengan Petugas Saat Penangkapan', fine: 10000, sanksi: 8 },
+            { id: '2.11', type: 'sedang', desc: 'Memberikan Informasi Palsu Kepada Petugas Selama Penyelidikan', fine: 10000, sanksi: 13 },
+            { id: '2.12', type: 'sedang', desc: 'Mengganggu Aparat Penegak Hukum Yang Sedang Bertugas', fine: 11000, sanksi: 15 },
+            { id: '2.13', type: 'sedang', desc: 'Sengaja Mengintimidasi Petugas Pe
